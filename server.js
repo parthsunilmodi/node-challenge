@@ -19,6 +19,7 @@ app.get('/:studentId/*', api.getStudents)
 app.get('/:studentId', api.getStudents)
 
 app.put('/:studentId/*', api.addAndUpdateStudent)
+app.put('/:studentId', api.addAndUpdateStudent)
 
 app.delete('/:studentId/*', api.deleteStudent)
 app.delete('/:studentId', api.deleteStudent)

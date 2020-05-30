@@ -8,11 +8,6 @@ async function getHealth (req, res, next) {
 }
 
 const getStudents = (req, res) => {
-  // check whether the studentId is there or not. If not, return with error
-  if (!req.params.studentId) {
-    res.status(404).send({ message: 'Invalid filename' })
-  }
-
   const fileName = `${req.params.studentId}.json`
   const files = fs.readdirSync(directory) // get all the files of the directory
 
@@ -42,7 +37,7 @@ const getStudents = (req, res) => {
 const addAndUpdateStudent = (req, res) => {
   const studentName = req.params.studentId.toLowerCase()
   const fileName = `${studentName}.json`
-  const paramsArray = req.params['0'].split('/')
+  const paramsArray = req.params['0'] ? req.params['0'].split('/') : []
   let obj = {}
   paramsArray.reduce((o, s, index) => {
     if (index !== (paramsArray.length - 1)) {
@@ -60,17 +55,15 @@ const addAndUpdateStudent = (req, res) => {
 }
 
 const deleteStudent = (req, res) => {
-  if (!req.params.studentId) {
-    res.status(404).send({ message: 'Invalid filename' })
-  }
   const fileName = `${req.params.studentId}.json`
   const params = req.params['0']
-  if (!params) {
-    fs.unlinkSync(`${directory}${fileName.toLowerCase()}`)
+
+  if (!params) { // if no parameters, delete the whole file
+    fs.unlinkSync(`${directory}${fileName.toLowerCase()}`) // delete the file
     res.send({ message: 'File is deleted' })
   }
   const paramsArray = params ? params.split('/') : []
-  const files = fs.readdirSync(directory)
+  const files = fs.readdirSync(directory) // get the data from the file
   if (files.includes(fileName.toLowerCase())) {
     const dataPath = `./data/${fileName}`
     fs.readFile(dataPath, 'utf-8', (err, data) => {
@@ -78,11 +71,11 @@ const deleteStudent = (req, res) => {
         throw err
       }
       const dataJSON = JSON.parse(data)
-      const newObj = _.omit(dataJSON, paramsArray.join('.').toString())
-      fs.writeFileSync(`${directory}${fileName.toLowerCase()}`, JSON.stringify(newObj), () => {
+      _.unset(dataJSON, paramsArray.join('.').toString()) // remove the properties from the object and removing the nested properties
+      fs.writeFileSync(`${directory}${fileName.toLowerCase()}`, JSON.stringify(dataJSON), () => { // update the file
         res.status(404).send('something went wrong')
       })
-      res.send({ message: 'Property deleted' })
+      res.send({ message: 'Property deleted', value: dataJSON })
     })
   } else {
     res.status(404).send({ message: 'File does not exist' })

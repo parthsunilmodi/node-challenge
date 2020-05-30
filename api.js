@@ -17,10 +17,9 @@ const getStudents = (req, res) => {
       if (err) {
         res.status(500).send({ message: 'Something went wrong' })
       }
-      const params = req.params['0']
-      const paramsArray = params ? params.split('/') : []
+      const params = req.params['0'] || ''
       const dataJSON = JSON.parse(data) // json of the data from the file
-      const value = _.get(dataJSON, paramsArray.join('.').toString())
+      const value = _.get(dataJSON, params.replace(/\//g, '.').toString())
       if (!params) { // return the whole file
         res.send({ message: 'Property found', value: dataJSON })
       } else if (value) { // return the data which is asked through params
@@ -40,12 +39,8 @@ const addAndUpdateStudent = (req, res) => {
   const paramsArray = req.params['0'] ? req.params['0'].split('/') : []
   let obj = {}
   paramsArray.reduce((o, s, index) => {
-    if (index !== (paramsArray.length - 1)) {
-      // eslint-disable-next-line no-return-assign
-      return o[s] = {}
-    }
-    // eslint-disable-next-line no-return-assign
-    return o[s] = req.body
+    index !== (paramsArray.length - 1) ? o[s] = {} : o[s] = req.body
+    return o[s]
   }, obj)
 
   fs.writeFileSync(`${directory}${fileName.toLowerCase()}`, JSON.stringify(obj), () => {
@@ -62,7 +57,6 @@ const deleteStudent = (req, res) => {
     fs.unlinkSync(`${directory}${fileName.toLowerCase()}`) // delete the file
     res.send({ message: 'File is deleted' })
   }
-  const paramsArray = params ? params.split('/') : []
   const files = fs.readdirSync(directory) // get the data from the file
   if (files.includes(fileName.toLowerCase())) {
     const dataPath = `./data/${fileName}`
@@ -71,7 +65,7 @@ const deleteStudent = (req, res) => {
         throw err
       }
       const dataJSON = JSON.parse(data)
-      _.unset(dataJSON, paramsArray.join('.').toString()) // remove the properties from the object and removing the nested properties
+      _.unset(dataJSON, params.replace(/\//g, '.')) // remove the properties from the object and removing the nested properties
       fs.writeFileSync(`${directory}${fileName.toLowerCase()}`, JSON.stringify(dataJSON), () => { // update the file
         res.status(404).send('something went wrong')
       })
